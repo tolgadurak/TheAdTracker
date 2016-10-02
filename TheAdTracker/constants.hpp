@@ -29,7 +29,7 @@ const float kPostProcessThreshold = 0.97f;
 const bool kEnableEyeCorner = false;
 
 // Draw Eye Regions on Debug Image
-const bool kDrawEyeRegionsDebugImage = true;
+const bool kDrawEyeRegionsDebugImage = false;
 
 // Show face window
 const bool kShowFaceWindow = false;

@@ -2,6 +2,14 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <dlib/opencv.h>
+#include <opencv2/opencv.hpp>
+#include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/image_processing/render_face_detections.h>
+#include <dlib/image_processing.h>
+#include <dlib/gui_widgets.h>
+#include "render_face.hpp"
+
 #include <iostream>
 #include <queue>
 #include <stdio.h>
@@ -12,7 +20,6 @@
 #include "findEyeCorner.hpp"
 
 
-/** Constants **/
 
 
 /** Function Headers */
@@ -24,19 +31,24 @@ void detectAndDisplay(cv::Mat frame);
 cv::CascadeClassifier face_cascade;
 std::string main_window_name = "Capture - Face / Eyes";
 std::string face_window_name = "Debug - Face";
+cv::String face_cascade_name = "lbpcascade_frontalface.xml";
+std::string pose_model_name = "shape_predictor_68_face_landmarks.dat";
+std::string error_loading_face_cascade = "--(!)Error loading face cascade, please change face_cascade_name in source code.\n";
 cv::RNG rng(12345);
 cv::Mat debugImage;
 cv::Mat skinCrCbHist = cv::Mat::zeros(cv::Size(256, 256), CV_8UC1);
+
+dlib::shape_predictor pose_model;
+
 
 /**
  * @function main
  */
 int main(int argc, const char** argv) {
     cv::Mat frame;
-    cv::String face_cascade_name = argv[1];
     // Load the cascades
-    if (!face_cascade.load(face_cascade_name)) { printf("--(!)Error loading face cascade, please change face_cascade_name in source code.\n"); return -1; };
-    
+    if (!face_cascade.load(face_cascade_name)) { std::cout << error_loading_face_cascade << std::endl; return -1; };
+    dlib::deserialize(pose_model_name) >> pose_model;
     cv::namedWindow(main_window_name, CV_WINDOW_NORMAL);
     cv::moveWindow(main_window_name, 400, 100);
     if(kShowFaceWindow) {
@@ -57,7 +69,7 @@ int main(int argc, const char** argv) {
 #else
             cv::VideoCapture capture(0);
             if (capture.isOpened()) {
-                capture.set(CV_CAP_PROP_FRAME_WIDTH,640);
+               capture.set(CV_CAP_PROP_FRAME_WIDTH,640);
                 capture.set(CV_CAP_PROP_FRAME_HEIGHT,480);
                 while (true) {
                     capture.read(frame);
@@ -109,29 +121,8 @@ int main(int argc, const char** argv) {
             //-- Find Eye Centers
             cv::Point leftPupil = findEyeCenter(faceROI, leftEyeRegion, "Left Eye");
             cv::Point rightPupil = findEyeCenter(faceROI, rightEyeRegion, "Right Eye");
-            // get corner regions
-            cv::Rect leftRightCornerRegion(leftEyeRegion);
-            leftRightCornerRegion.width -= leftPupil.x;
-            leftRightCornerRegion.x += leftPupil.x;
-            leftRightCornerRegion.height /= 2;
-            leftRightCornerRegion.y += leftRightCornerRegion.height / 2;
-            cv::Rect leftLeftCornerRegion(leftEyeRegion);
-            leftLeftCornerRegion.width = leftPupil.x;
-            leftLeftCornerRegion.height /= 2;
-            leftLeftCornerRegion.y += leftLeftCornerRegion.height / 2;
-            cv::Rect rightLeftCornerRegion(rightEyeRegion);
-            rightLeftCornerRegion.width = rightPupil.x;
-            rightLeftCornerRegion.height /= 2;
-            rightLeftCornerRegion.y += rightLeftCornerRegion.height / 2;
-            cv::Rect rightRightCornerRegion(rightEyeRegion);
-            rightRightCornerRegion.width -= rightPupil.x;
-            rightRightCornerRegion.x += rightPupil.x;
-            rightRightCornerRegion.height /= 2;
-            rightRightCornerRegion.y += rightRightCornerRegion.height / 2;
-            rectangle(debugFace, leftRightCornerRegion, 200);
-            rectangle(debugFace, leftLeftCornerRegion, 200);
-            rectangle(debugFace, rightLeftCornerRegion, 200);
-            rectangle(debugFace, rightRightCornerRegion, 200);
+            
+            
             
             /*
              To draw eye location in debugImage
@@ -178,42 +169,49 @@ int main(int argc, const char** argv) {
             /*
              To show in debugImage
              */
+            if(kShowFaceWindow) {
+                // get corner regions
+                cv::Rect leftRightCornerRegion(leftEyeRegion);
+                leftRightCornerRegion.width -= leftPupil.x;
+                leftRightCornerRegion.x += leftPupil.x;
+                leftRightCornerRegion.height /= 2;
+                leftRightCornerRegion.y += leftRightCornerRegion.height / 2;
+                cv::Rect leftLeftCornerRegion(leftEyeRegion);
+                leftLeftCornerRegion.width = leftPupil.x;
+                leftLeftCornerRegion.height /= 2;
+                leftLeftCornerRegion.y += leftLeftCornerRegion.height / 2;
+                cv::Rect rightLeftCornerRegion(rightEyeRegion);
+                rightLeftCornerRegion.width = rightPupil.x;
+                rightLeftCornerRegion.height /= 2;
+                rightLeftCornerRegion.y += rightLeftCornerRegion.height / 2;
+                cv::Rect rightRightCornerRegion(rightEyeRegion);
+                rightRightCornerRegion.width -= rightPupil.x;
+                rightRightCornerRegion.x += rightPupil.x;
+                rightRightCornerRegion.height /= 2;
+                rightRightCornerRegion.y += rightRightCornerRegion.height / 2;
+
+                rectangle(debugFace, leftRightCornerRegion, 200);
+                rectangle(debugFace, leftLeftCornerRegion, 200);
+                rectangle(debugFace, rightLeftCornerRegion, 200);
+                rectangle(debugFace, rightRightCornerRegion, 200);
+            }
+
             // change eye centers to face coordinates
             rightPupil.x += rightEyeRegion.x;
             rightPupil.y += rightEyeRegion.y;
             leftPupil.x += leftEyeRegion.x;
             leftPupil.y += leftEyeRegion.y;
-            // draw eye centers
-            circle(debugFace, rightPupil, 3, 1234);
-            circle(debugFace, leftPupil, 3, 1234);
-            if(kDrawEyeRegionsDebugImage) {
-                circle(debugImage, rightPupil + cv::Point(face.x, face.y), 3, cv::Scalar(255, 255, 255));
-                circle(debugImage, leftPupil + cv::Point(face.x, face.y), 3, cv::Scalar(255, 255, 255));
-            }
             
-            
-            //-- Find Eye Corners
-            if (kEnableEyeCorner) {
-                cv::Point2f leftRightCorner = findEyeCorner(faceROI(leftRightCornerRegion), true, false);
-                leftRightCorner.x += leftRightCornerRegion.x;
-                leftRightCorner.y += leftRightCornerRegion.y;
-                cv::Point2f leftLeftCorner = findEyeCorner(faceROI(leftLeftCornerRegion), true, true);
-                leftLeftCorner.x += leftLeftCornerRegion.x;
-                leftLeftCorner.y += leftLeftCornerRegion.y;
-                cv::Point2f rightLeftCorner = findEyeCorner(faceROI(rightLeftCornerRegion), false, true);
-                rightLeftCorner.x += rightLeftCornerRegion.x;
-                rightLeftCorner.y += rightLeftCornerRegion.y;
-                cv::Point2f rightRightCorner = findEyeCorner(faceROI(rightRightCornerRegion), false, false);
-                rightRightCorner.x += rightRightCornerRegion.x;
-                rightRightCorner.y += rightRightCornerRegion.y;
-                circle(debugImage, leftRightCorner, 3, 200);
-                circle(debugImage, leftLeftCorner, 3, 200);
-                circle(debugImage, rightLeftCorner, 3, 200);
-                circle(debugImage, rightRightCorner, 3, 200);
-            }
             if(kShowFaceWindow) {
+                // draw eye centers
+                circle(debugFace, rightPupil, 3, 1234, -1);
+                circle(debugFace, leftPupil, 3, 1234, -1);
                 imshow(face_window_name, faceROI);
             }
+            
+                circle(debugImage, rightPupil + cv::Point(face.x, face.y), 3, cv::Scalar(255, 255, 255), -1);
+                circle(debugImage, leftPupil + cv::Point(face.x, face.y), 3, cv::Scalar(255, 255, 255), -1);
+
             
         }
         
@@ -244,23 +242,40 @@ int main(int argc, const char** argv) {
          */
         void detectAndDisplay(cv::Mat frame) {
             std::vector<cv::Rect> faces;
-            //cv::Mat frame_gray;
+            
             
             std::vector<cv::Mat> rgbChannels(3);
             cv::split(frame, rgbChannels);
             cv::Mat frame_gray = rgbChannels[2];
+
+            // Change to dlib's image format. No memory is copied.
             
-            //cvtColor( frame, frame_gray, CV_BGR2GRAY );
-            //equalizeHist( frame_gray, frame_gray );
-            //cv::pow(frame_gray, CV_64F, frame_gray);
+            dlib::cv_image<dlib::bgr_pixel> cimg(frame);
+            
             //-- Detect faces
             face_cascade.detectMultiScale(frame_gray, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE | CV_HAAR_FIND_BIGGEST_OBJECT, cv::Size(150, 150));
-            //  findSkin(debugImage);
             
-            for (int i = 0; i < faces.size(); i++)
+            // Find the pose of each face.
+            // std::vector<full_object_detection> shapes;
+            
+
+            
+            for (unsigned long i = 0; i < faces.size(); ++i)
             {
-                rectangle(debugImage, faces[i], 1234);
+                
+                dlib::rectangle r(
+                            (long)(faces[i].x),
+                            (long)(faces[i].y),
+                            (long)(faces[i].x + faces[i].width),
+                            (long)(faces[i].y + faces[i].height)
+                            );
+                dlib::full_object_detection shape = pose_model(cimg, r);
+                //  shapes.push_back(shape);
+                
+                render_face(debugImage, shape);
+                
             }
+
             //-- Show what you got
             if (faces.size() > 0) {
                 findEyes(frame_gray, faces[0]);
