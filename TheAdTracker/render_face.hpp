@@ -10,9 +10,8 @@ void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, const int
     for (int i = start; i <= end; ++i)
     {
         points.push_back(cv::Point(static_cast<int>(d.part(i).x()), static_cast<int>(d.part(i).y())));
-    }
-    cv::polylines(img, points, isClosed, cv::Scalar(255,0,0), 1, 16);
-    
+		cv::circle(img, points[i-start], 1, cv::Scalar(255, 255, 255), 1);		
+    }       
 }
 
 void render_face (cv::Mat &img, const dlib::full_object_detection& d)
@@ -25,15 +24,15 @@ void render_face (cv::Mat &img, const dlib::full_object_detection& d)
      << "\n\t d.num_parts():  " << d.num_parts()
      );
     
-    draw_polyline(img, d, 0, 16);           // Jaw line
-    draw_polyline(img, d, 17, 21);          // Left eyebrow
-    draw_polyline(img, d, 22, 26);          // Right eyebrow
-    draw_polyline(img, d, 27, 30);          // Nose bridge
-    draw_polyline(img, d, 30, 35, true);    // Lower nose
+   // draw_polyline(img, d, 0, 16);           // Jaw line
+    //draw_polyline(img, d, 17, 21);          // Left eyebrow
+    //draw_polyline(img, d, 22, 26);          // Right eyebrow
+   // draw_polyline(img, d, 27, 30);          // Nose bridge
+   // draw_polyline(img, d, 30, 35, true);    // Lower nose
     draw_polyline(img, d, 36, 41, true);    // Left eye
     draw_polyline(img, d, 42, 47, true);    // Right Eye
-    draw_polyline(img, d, 48, 59, true);    // Outer lip
-    draw_polyline(img, d, 60, 67, true);    // Inner lip
+  //  draw_polyline(img, d, 48, 59, true);    // Outer lip
+  //  draw_polyline(img, d, 60, 67, true);    // Inner lip
     
 }
 
