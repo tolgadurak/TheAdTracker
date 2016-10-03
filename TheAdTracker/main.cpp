@@ -17,7 +17,7 @@
 
 #include "constants.hpp"
 #include "findEyeCenter.hpp"
-#include "findEyeCorner.hpp"
+
 
 
 
@@ -36,7 +36,7 @@ std::string pose_model_name = "shape_predictor_68_face_landmarks.dat";
 std::string error_loading_face_cascade = "--(!)Error loading face cascade, please change face_cascade_name in source code.\n";
 cv::RNG rng(12345);
 cv::Mat debugImage;
-cv::Mat skinCrCbHist = cv::Mat::zeros(cv::Size(256, 256), CV_8UC1);
+
 
 dlib::shape_predictor pose_model;
 
@@ -55,10 +55,6 @@ int main(int argc, const char** argv) {
 		cv::namedWindow(face_window_name, CV_WINDOW_NORMAL);
 		cv::moveWindow(face_window_name, 10, 100);
 	}
-
-	createCornerKernels();
-	ellipse(skinCrCbHist, cv::Point(113, static_cast<int>(155.6)), cv::Size(static_cast<int>(23.4), static_cast<int>(15.2)),
-		43.0, 0.0, 360.0, cv::Scalar(255, 255, 255), -1);
 
 	// I make an attempt at supporting both 2.x and 3.x OpenCV
 #if CV_MAJOR_VERSION < 3
@@ -98,7 +94,7 @@ int main(int argc, const char** argv) {
 
 		}
 	}
-	releaseCornerKernels();
+	
 	return 0;
 }
 
@@ -212,30 +208,6 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
 
 	circle(debugImage, rightPupil + cv::Point(face.x, face.y), 3, cv::Scalar(255, 255, 255), -1);
 	circle(debugImage, leftPupil + cv::Point(face.x, face.y), 3, cv::Scalar(255, 255, 255), -1);
-
-
-}
-
-
-cv::Mat findSkin(cv::Mat &frame) {
-	cv::Mat input;
-	cv::Mat output = cv::Mat(frame.rows, frame.cols, CV_8U);
-
-	cvtColor(frame, input, CV_BGR2YCrCb);
-
-	for (int y = 0; y < input.rows; ++y) {
-		const cv::Vec3b *Mr = input.ptr<cv::Vec3b>(y);
-		//    uchar *Or = output.ptr<uchar>(y);
-		cv::Vec3b *Or = frame.ptr<cv::Vec3b>(y);
-		for (int x = 0; x < input.cols; ++x) {
-			cv::Vec3b ycrcb = Mr[x];
-			//      Or[x] = (skinCrCbHist.at<uchar>(ycrcb[1], ycrcb[2]) > 0) ? 255 : 0;
-			if (skinCrCbHist.at<uchar>(ycrcb[1], ycrcb[2]) == 0) {
-				Or[x] = cv::Vec3b(0, 0, 0);
-			}
-		}
-	}
-	return output;
 }
 
 /**
@@ -257,9 +229,6 @@ void detectAndDisplay(cv::Mat frame) {
 	face_cascade.detectMultiScale(frame_gray, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE | CV_HAAR_FIND_BIGGEST_OBJECT, cv::Size(150, 150));
 
 	// Find the pose of each face.
-	// std::vector<full_object_detection> shapes;
-
-
 
 	for (unsigned long i = 0; i < faces.size(); ++i)
 	{
@@ -271,7 +240,7 @@ void detectAndDisplay(cv::Mat frame) {
 			(long)(faces[i].y + faces[i].height)
 		);
 		dlib::full_object_detection shape = pose_model(cimg, r);
-		//  shapes.push_back(shape);
+
 
 		render_face(debugImage, shape);
 
