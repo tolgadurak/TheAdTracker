@@ -31,7 +31,7 @@ void detectAndDisplay(cv::Mat frame);
 cv::CascadeClassifier face_cascade;
 std::string main_window_name = "Capture - Face / Eyes";
 std::string face_window_name = "Debug - Face";
-cv::String face_cascade_name = "haarcascade_frontalface_alt_tree.xml";
+cv::String face_cascade_name = "haarcascade_frontalface_alt.xml";
 std::string pose_model_name = "shape_predictor_68_face_landmarks.dat";
 std::string error_loading_face_cascade = "--(!)Error loading face cascade, please change face_cascade_name in source code.\n";
 cv::RNG rng(12345);
@@ -68,9 +68,10 @@ int main(int argc, const char** argv) {
 			frame = cvQueryFrame(capture);
 #else
 	cv::VideoCapture capture(0);
+	capture.set(CV_CAP_PROP_FRAME_WIDTH, 800);
+	capture.set(CV_CAP_PROP_FRAME_HEIGHT, 600);
 	if (capture.isOpened()) {
-		capture.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-		capture.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+
 		while (true) {
 			capture.read(frame);
 #endif
@@ -117,7 +118,7 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
 		eye_region_top, eye_region_width, eye_region_height);
 	cv::Rect rightEyeRegion(static_cast<int>(face.width - eye_region_width - face.width*(kEyePercentSide / 100.0)),
 		eye_region_top, eye_region_width, eye_region_height);
-
+	
 	//-- Find Eye Centers
 	cv::Point leftPupil = findEyeCenter(faceROI, leftEyeRegion, "Left Eye");
 	cv::Point rightPupil = findEyeCenter(faceROI, rightEyeRegion, "Right Eye");
@@ -157,13 +158,13 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
 		rightRightCornerRegionDebugImage.height /= 2;
 		rightRightCornerRegionDebugImage.y += rightRightCornerRegionDebugImage.height / 2;
 
-		rectangle(debugImage, leftEyeRegionDebugImage, 200);
-		rectangle(debugImage, rightEyeRegionDebugImage, 200);
-
-		rectangle(debugImage, leftRightCornerRegionDebugImage, 200);
+		rectangle(debugImage, leftEyeRegionDebugImage, cv::Scalar(255, 255, 255));
+		rectangle(debugImage, rightEyeRegionDebugImage, cv::Scalar(255, 255, 255));
+		/*rectangle(debugImage, leftRightCornerRegionDebugImage, 200);
 		rectangle(debugImage, leftLeftCornerRegionDebugImage, 200);
 		rectangle(debugImage, rightLeftCornerRegionDebugImage, 200);
-		rectangle(debugImage, rightRightCornerRegionDebugImage, 200);
+		rectangle(debugImage, rightRightCornerRegionDebugImage, 200);*/
+		
 	}
 
 	/*
