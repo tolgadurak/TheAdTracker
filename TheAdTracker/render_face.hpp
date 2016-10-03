@@ -11,7 +11,7 @@ void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, const int
     {
         points.push_back(cv::Point(static_cast<int>(d.part(i).x()), static_cast<int>(d.part(i).y())));
     }
-    cv::polylines(img, points, isClosed, cv::Scalar(255,0,0), 2, 16);
+    cv::polylines(img, points, isClosed, cv::Scalar(255,0,0), 1, 16);
     
 }
 
