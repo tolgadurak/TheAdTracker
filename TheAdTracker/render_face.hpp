@@ -10,7 +10,7 @@ void draw_polyline(cv::Mat &img, const dlib::full_object_detection& d, const int
     for (int i = start; i <= end; ++i)
     {
         points.push_back(cv::Point(static_cast<int>(d.part(i).x()), static_cast<int>(d.part(i).y())));
-		cv::circle(img, points[i-start], 1, cv::Scalar(255, 255, 255), 1);		
+		cv::circle(img, points[i-start], 1, cv::Scalar(255, 255, 255), -1);		
     }       
 }
 
