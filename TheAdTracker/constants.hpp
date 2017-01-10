@@ -31,6 +31,7 @@ const bool kEnableEyeCorner = false;
 // Draw Eye Regions on Debug Image
 const bool kDrawEyeRegionsDebugImage = false;
 
-// Show face window
+// Show windows
 const bool kShowFaceWindow = false;
+const bool kEyeWindowsEnabled = true;
 #endif
